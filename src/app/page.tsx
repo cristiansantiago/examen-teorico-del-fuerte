@@ -1,101 +1,79 @@
+'use client';
+import { BooksResult } from "@/models/Book";
 import Image from "next/image";
-
+import { useState } from "react";
+import ResponsivePagination from 'react-responsive-pagination';
 export default function Home() {
+  const [ search, setSearch] = useState<string>();
+  const [ books, setBooks] = useState<BooksResult>();
+  const [ currentPage, setCurrentPage ] = useState(1);
+  const [total, setTotal]=useState<number>(0);
+  const [ loading, setLoading ]= useState<boolean>(false);
+  const fetchBooks = (page : number)=>{
+    setLoading(true);
+    fetch(`https://www.googleapis.com/books/v1/volumes?q=${search}&key=AIzaSyB1i_c0loqsTQX25dufz5qUaTI5VARU99A&startIndex=${page}&maxResults=10`).then(async(result)=>{
+      if(result.ok){
+        const booksJson : BooksResult = await result.json();
+        setBooks(booksJson);        
+        setTotal(Math.ceil(booksJson.totalItems/10))
+      }
+      
+    }).finally(()=>{
+      setLoading(false);
+    });
+  }
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchBooks(1);
+    
+  }
+  
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div className="items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <main className=" items-center sm:items-start">
+          <h1 className="text-4xl">Google Books</h1>
+          <input className="my-4 px-3 py-2 text-slate-600 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-sky-500 block w-full rounded-md sm:text-sm focus:ring-1" onChange={(e)=>setSearch(e.target.value)}/> 
+          <button onClick={()=>handleSearch()} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Buscar</button>
+          <div className="grid grid-cols-5 gap-4 my-5">
+            {
+              !loading && books?.items?.map((book)=>(
+                <div key={book.id} className="text-center justify-center items-center bg-slate-500 rounded-md p-4">                  
+                  {  <Image className="rounded-md inline" src={book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.thumbnail: `https://placehold.co/150x220?text=${book.volumeInfo.title}`} width={150} height={200} alt="" unoptimized/>}
+                  <h1 className="text-1xl my-2">{book.volumeInfo.title}</h1>
+                  <p className="truncate text-gray-700">{book.volumeInfo.description}</p>
+                </div>
+              ))
+            }
+            {
+              loading && Array.from({length:10}).map((_, index)=>(
+                <div key={index} className="text-center justify-center items-center bg-gray-300 rounded-md p-4 animate-pulse">
+                  <div className="bg-gray-200 rounded-md h-56 w-40 mx-auto" />
+                  <div className="h-4 bg-gray-200 rounded my-2 w-3/4 mx-auto" /> 
+                  <div className="h-4 bg-gray-200 rounded w-full mx-auto" /> 
+                </div>
+              ))
+            }
+          </div>
+          {
+            books && (
+              <ResponsivePagination
+                className="flex space-x-2 "
+                current={currentPage}
+                total={total}
+                onPageChange={(value)=>{
+                  setCurrentPage(value);
+                  fetchBooks(value ===1 ? value : value+10);
+                }}
+                activeItemClassName="bg-blue-500 text-white border-blue-500 rounded-full item-center  px-3 py-1 rounded border transition-colors duration-200"
+                previousClassName="px-3 py-1 rounded border text-blue-500 hover:bg-blue-500 hover:text-white transition-colors duration-200"
+                nextClassName="px-3 py-1 rounded border text-blue-500 hover:bg-blue-500 hover:text-white transition-colors duration-200"
+                pageItemClassName="px-3 py-1 rounded-full border transition-colors duration-200"
+                disabledItemClassName="opacity-50 cursor-not-allowed"
+              />
+            )
+          }          
+          
+        </main>
     </div>
   );
 }
